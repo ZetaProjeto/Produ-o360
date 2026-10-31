@@ -1,25 +1,32 @@
-# Produção360 — Relatórios de fabricação em PDF
+# Produção360 — Relatórios de fabricação
 
-Projeto estático pronto para GitHub Pages (HTML, CSS e JavaScript).
+Aplicação estática (HTML, CSS e JavaScript) para publicar gratuitamente no GitHub Pages.
 
-## Funções
-- Caixa de 10 litros: açaí sem sabor, ou sorvete com sabor obrigatório.
-- Picolés: sabor e quantidade produzida.
-- Data de fabricação em cada registro; validade calculada adicionando 180 dias corridos.
-- Lista de produção, totais de caixas e picolés, remoção de registros.
-- **Baixar PDF:** gera e baixa relatório A4.
-- **Imprimir relatório:** abre uma visualização dedicada à impressão, com botão Imprimir / Salvar em PDF. Permita pop-ups para o site.
-- **Copiar relatório:** copia os dados como texto.
-- Configurações: apenas nome do estabelecimento.
-- Dados salvos localmente no navegador (`localStorage`); não existe sincronização entre dispositivos.
+## Funcionalidades
+- Caixa 10 L: **açaí** (sem sabor) ou **sorvete** (sabor obrigatório).
+- Picolés: sabor e quantidade.
+- Data de fabricação em cada registro; validade calculada como **fabricação + 180 dias corridos**.
+- Lista de itens, totais separados para caixas e picolés.
+- Relatório formatado para enviar no WhatsApp, copiar ou imprimir/salvar em PDF pelo navegador.
+- Nome do estabelecimento e número WhatsApp configuráveis (em **Configurações**).
+- Registros e configurações salvos em `localStorage` **apenas no aparelho/navegador usado**.
 
-## Como atualizar no GitHub Pages
-1. Substitua os arquivos `index.html`, `styles.css`, `app.js` e `README.md` na raiz do repositório.
-2. Confirme em **Settings → Pages** que está configurado: **Deploy from a branch** / **main** / **/(root)**.
-3. Após publicar, atualize o navegador com Ctrl+F5 se ainda aparecer a interface antiga.
+## Publicar no GitHub Pages
+1. Crie um repositório no GitHub, por exemplo `relatorio-producao`.
+2. Envie `index.html`, `styles.css` e `app.js` para a **raiz** da branch `main`.
+3. Em **Settings → Pages → Build and deployment**, selecione **Deploy from a branch**, branch **main**, pasta **/(root)** e **Save**.
+4. Abra a URL exibida pelo GitHub Pages quando a publicação estiver concluída.
 
-## Dependência
-O PDF é gerado diretamente no navegador, sem bibliotecas externas e sem exigir conexão com CDN.
+## WhatsApp
+O botão **Enviar pelo WhatsApp** abre um link `wa.me` com o texto preenchido, mas o usuário deve **confirmar o envio no WhatsApp**. Não há envio automático nem necessidade de servidor/API. Para enviar a um destinatário específico, informe o número internacional com DDI 55 + DDD + telefone, somente dígitos. Relatórios muito grandes podem ultrapassar o tamanho prático de links; nesse caso use **Copiar relatório**.
 
-## Atenção
-O cálculo usa **data de fabricação + 180 dias** (fabricação como dia zero). Confirme o prazo de validade conforme os critérios técnicos/sanitários de cada produto.
+## Observações importantes
+- **180 dias corridos** significa adicionar 180 dias ao dia de fabricação. O próprio dia de fabricação é o dia zero. Confirme que essa regra corresponde ao procedimento técnico e à rotulagem do produto.
+- **O fechamento da aba não apaga os dados**, mas limpeza do navegador, troca de dispositivo ou modo anônimo podem apagá-los. Não é uma base compartilhada entre funcionários. Para isso, será preciso backend como Supabase.
+- A aplicação não valida automaticamente se uma data de validade está de acordo com exigências sanitárias.
+- Não armazena dados de clientes ou informações pessoais no servidor.
+
+
+## Compartilhamento de PDF no WhatsApp
+
+Clique em **Enviar PDF pelo WhatsApp**. Em dispositivos/navegadores com compartilhamento nativo de arquivos, selecione o WhatsApp e o contato e confirme o envio. Quando esse compartilhamento não é suportado, o PDF é baixado e a conversa de WhatsApp é aberta: anexe o arquivo manualmente. Um site estático não consegue enviar documentos automaticamente para um contato específico sem uma API/servidor autorizado. O PDF é gerado com jsPDF via CDN (é preciso acesso à internet).

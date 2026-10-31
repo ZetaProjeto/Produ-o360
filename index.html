@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#162d52" />
-  <meta name="description" content="Registro de produção de açaí, sorvetes e picolés com cálculo de validade e relatórios em PDF para baixar e imprimir." />
+  <meta name="description" content="Registro de produção de açaí, sorvetes e picolés com cálculo de validade e relatório para WhatsApp." />
   <title>Produção & Validade | Relatórios</title>
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -17,7 +18,7 @@
     </header>
 
     <section class="hero">
-      <div><span class="eyebrow">CONTROLE DE PRODUÇÃO</span><h1>Relatórios de fabricação,<br><span>sem complicação.</span></h1><p>Registre caixas de 10 litros e picolés, calcule o vencimento e gere relatórios em PDF para baixar ou imprimir.</p></div>
+      <div><span class="eyebrow">CONTROLE DE PRODUÇÃO</span><h1>Relatórios de fabricação,<br><span>sem complicação.</span></h1><p>Registre caixas de 10 litros e picolés, calcule o vencimento e envie um resumo direto para o WhatsApp.</p></div>
       <div class="hero-metric"><small>Prazo de validade</small><strong>180 <span>dias</span></strong><p>Corridos após a fabricação</p></div>
     </section>
 
@@ -38,13 +39,13 @@
         <div class="panel-heading"><div><span class="kicker">02 / RELATÓRIO</span><h2 id="reportTitle">Produção registrada</h2></div><span class="small-tag" id="countBadge">0 registros</span></div>
         <div class="totals"><div><small>Caixas de 10 L</small><strong id="boxesTotal">0</strong></div><div><small>Picolés</small><strong id="popsTotal">0</strong></div></div>
         <div class="list" id="itemsList"><div class="empty">Nenhum registro adicionado. Preencha o formulário para começar.</div></div>
-        <div class="report-actions"><button type="button" id="downloadBtn" class="btn primary">⬇ Baixar PDF</button><button type="button" id="printBtn" class="btn secondary">▤ Imprimir relatório</button><button type="button" id="copyBtn" class="btn secondary">Copiar relatório</button><button type="button" id="clearBtn" class="btn danger">Limpar relatório</button></div>
-        <p class="hint">Baixe o documento em PDF ou abra o mesmo relatório pronto para impressão.</p>
+        <div class="report-actions"><button type="button" id="sendBtn" class="btn whatsapp">↗ Enviar PDF pelo WhatsApp</button><button type="button" id="copyBtn" class="btn secondary">Copiar relatório</button><button type="button" id="printBtn" class="btn secondary">Baixar PDF</button><button type="button" id="clearBtn" class="btn danger">Limpar relatório</button></div>
+        <p class="hint">No celular compatível, compartilhe o PDF diretamente pelo WhatsApp. Nos demais dispositivos, o PDF será baixado para anexar manualmente na conversa.</p>
       </section>
     </div>
     <footer>PRODUÇÃO360 · Registros salvos somente neste navegador · Confirme a validade com os procedimentos da sua empresa.</footer>
   </main>
-  <dialog id="settingsDialog"><form method="dialog" class="settings-content"><div class="dialog-heading"><h2>Configurações</h2><button class="close" value="cancel" aria-label="Fechar">✕</button></div><label for="businessName">Nome do estabelecimento</label><input id="businessName" maxlength="80" placeholder="Ex.: Fábrica de Sorvetes"/><button class="btn primary wide" id="saveSettings" value="save">Salvar configurações</button></form></dialog>
+  <dialog id="settingsDialog"><form method="dialog" class="settings-content"><div class="dialog-heading"><h2>Configurações</h2><button class="close" value="cancel" aria-label="Fechar">✕</button></div><label for="businessName">Nome do estabelecimento</label><input id="businessName" maxlength="80" placeholder="Ex.: Fábrica de Sorvetes"/><label for="whatsapp">WhatsApp destinatário (com DDI e DDD)</label><input id="whatsapp" type="tel" inputmode="numeric" placeholder="Ex.: 5531999999999"/><p class="hint">Se ficar vazio, o WhatsApp abrirá a lista de contatos (quando disponível).</p><button class="btn primary wide" id="saveSettings" value="save">Salvar configurações</button></form></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
