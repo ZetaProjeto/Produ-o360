@@ -11,8 +11,9 @@ function read(key, fallback) { try { const value = JSON.parse(localStorage.getIt
 let items = read(STORAGE, []);
 if (!Array.isArray(items)) items = [];
 items = items.filter(v => v && ['caixa','picole'].includes(v.type) && ['acai','sorvete','picole'].includes(v.category) && Number.isSafeInteger(v.qty) && v.qty > 0 && validDate(v.date) && typeof v.id === 'string');
-let settings = read(SETTINGS, { business: '', phone: '' });
-if (!settings || typeof settings !== 'object') settings = { business:'', phone:'' };
+let settings = read(SETTINGS, { business: '' });
+if (!settings || typeof settings !== 'object') settings = { business:'' };
+settings = {business: String(settings.business || '')};
 const save = () => { try { localStorage.setItem(STORAGE, JSON.stringify(items)); return true; } catch { notify('Não foi possível salvar no navegador.'); return false; } };
 function notify(message) { const el=$('toast'); el.textContent=message; el.classList.add('show'); clearTimeout(notify.timer); notify.timer=setTimeout(()=>el.classList.remove('show'),3000); }
 function syncForm() {
@@ -98,34 +99,30 @@ function makePdf() {
  doc.setDrawColor(214,228,245);doc.line(margin,y,pageW-margin,y);y+=9;
  doc.setFontSize(12);doc.setFont('helvetica','bold');doc.text(`TOTAL: ${boxes.toLocaleString('pt-BR')} caixa(s) de 10 L | ${pops.toLocaleString('pt-BR')} picole(s)`,margin,y);
  const date=getToday().replaceAll('-','');
- return {blob:doc.output('blob'),filename:`relatorio-producao-${date}.pdf`};
+ return {doc,blob:doc.output('blob'),filename:`relatorio-producao-${date}.pdf`};
 }
 function downloadPdf(pdf){
  const url=URL.createObjectURL(pdf.blob);
  const a=document.createElement('a');a.href=url;a.download=pdf.filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
-$('sendBtn').addEventListener('click',async()=>{
+$('downloadBtn').addEventListener('click',()=>{
  if(!checkItems())return;
- const phone=String(settings.phone||'').replace(/\D/g,'');
- if(phone && (phone.length<10||phone.length>15)){notify('Confira o WhatsApp nas configurações.');return;}
  const pdf=makePdf();if(!pdf)return;
- const file=new File([pdf.blob],pdf.filename,{type:'application/pdf'});
- try {
-  if(navigator.share && navigator.canShare?.({files:[file]})) {
-   await navigator.share({files:[file],title:'Relatório de produção'});
-   return;
-  }
- } catch(err){
-  if(err?.name==='AbortError')return;
- }
- downloadPdf(pdf);
- notify('PDF baixado! Anexe o arquivo na conversa do WhatsApp.');
- const url=`https://wa.me/${phone}?text=${encodeURIComponent('Olá! Segue o relatório de produção em PDF. Vou anexar o documento nesta conversa.')}`;
- const opened=window.open(url,'_blank','noopener,noreferrer');if(!opened) notify('PDF baixado. Abra o WhatsApp e anexe o arquivo manualmente.');
+ downloadPdf(pdf);notify('PDF gerado para download.');
 });
 $('copyBtn').addEventListener('click',async()=>{if(!checkItems())return;try{await navigator.clipboard.writeText(report());notify('Relatório copiado!');}catch{notify('Não foi possível copiar automaticamente.');}});
-$('printBtn').addEventListener('click',()=>{if(!checkItems())return;const pdf=makePdf();if(pdf){downloadPdf(pdf);notify('PDF gerado com sucesso.');}});
+$('printBtn').addEventListener('click',()=>{
+ if(!checkItems())return;
+ // Abrir a aba diretamente no clique evita bloqueio de pop-ups.
+ const tab=window.open('','_blank');
+ const pdf=makePdf();if(!pdf){if(tab)tab.close();return;}
+ pdf.doc.autoPrint();
+ const url=URL.createObjectURL(pdf.doc.output('blob'));
+ if(tab){tab.location.href=url;notify('Relatório aberto para impressão.');}
+ else{downloadPdf(pdf);notify('Pop-up bloqueado. PDF baixado; abra o arquivo e imprima.');}
+ setTimeout(()=>URL.revokeObjectURL(url),120000);
+});
 $('clearBtn').addEventListener('click',()=>{if(!items.length)return;if(confirm('Deseja remover todos os registros deste relatório?')){items=[];save();render();notify('Relatório limpo.');}});
-$('settingsBtn').addEventListener('click',()=>{ $('businessName').value=settings.business||'';$('whatsapp').value=settings.phone||'';$('settingsDialog').showModal();});
-$('saveSettings').addEventListener('click',e=>{const phone=$('whatsapp').value.replace(/\D/g,'');if(phone&&(phone.length<10||phone.length>15)){e.preventDefault();notify('Informe o número com DDI e DDD, ex.: 5531999999999.');return;}settings={business:$('businessName').value.trim(),phone};try{localStorage.setItem(SETTINGS,JSON.stringify(settings));notify('Configurações salvas.');}catch{notify('Não foi possível salvar as configurações.');}});
+$('settingsBtn').addEventListener('click',()=>{ $('businessName').value=settings.business||'';$('settingsDialog').showModal();});
+$('saveSettings').addEventListener('click',()=>{settings={business:$('businessName').value.trim()};try{localStorage.setItem(SETTINGS,JSON.stringify(settings));notify('Configurações salvas.');}catch{notify('Não foi possível salvar as configurações.');}});
 syncForm();render();
