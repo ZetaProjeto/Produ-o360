@@ -1,32 +1,25 @@
-# Produção360 — Relatórios de fabricação
+# Produção 360
 
-Aplicação estática (HTML, CSS e JavaScript) para publicar gratuitamente no GitHub Pages.
+Sistema estático de controle de produção e validade para caixas de 10 L, potes de açaí de 2 L, potes de sorvete e picolés.
 
-## Funcionalidades
-- Caixa 10 L: **açaí** (sem sabor) ou **sorvete** (sabor obrigatório).
-- Picolés: sabor e quantidade.
-- Data de fabricação em cada registro; validade calculada como **fabricação + 180 dias corridos**.
-- Lista de itens, totais separados para caixas e picolés.
-- Relatório formatado para enviar no WhatsApp, copiar ou imprimir/salvar em PDF pelo navegador.
-- Nome do estabelecimento e número WhatsApp configuráveis (em **Configurações**).
-- Registros e configurações salvos em `localStorage` **apenas no aparelho/navegador usado**.
+## Recursos
+- Cadastro de caixas de 10 L de açaí ou sorvete.
+- Cadastro de potes de açaí de 2 L.
+- Cadastro de potes de sorvete com três sabores diferentes no mesmo pote.
+- Cadastro de picolés por sabor.
+- Cálculo de validade com base em 180 dias corridos após a fabricação.
+- Relatório em PDF com layout aprimorado e resumo da produção.
+- Compartilhamento/abertura do WhatsApp e cópia do relatório.
+- Dados armazenados no `localStorage` do navegador.
 
 ## Publicar no GitHub Pages
-1. Crie um repositório no GitHub, por exemplo `relatorio-producao`.
-2. Envie `index.html`, `styles.css` e `app.js` para a **raiz** da branch `main`.
-3. Em **Settings → Pages → Build and deployment**, selecione **Deploy from a branch**, branch **main**, pasta **/(root)** e **Save**.
-4. Abra a URL exibida pelo GitHub Pages quando a publicação estiver concluída.
+1. Envie `index.html`, `styles.css`, `app.js` e este README para a raiz do repositório.
+2. No GitHub, acesse **Settings → Pages**.
+3. Em **Build and deployment**, selecione **Deploy from a branch**.
+4. Selecione a branch principal e a pasta `/ (root)`, depois salve.
 
-## WhatsApp
-O botão **Enviar pelo WhatsApp** abre um link `wa.me` com o texto preenchido, mas o usuário deve **confirmar o envio no WhatsApp**. Não há envio automático nem necessidade de servidor/API. Para enviar a um destinatário específico, informe o número internacional com DDI 55 + DDD + telefone, somente dígitos. Relatórios muito grandes podem ultrapassar o tamanho prático de links; nesse caso use **Copiar relatório**.
+O gerador de PDF usa jsPDF via CDN, portanto a geração do PDF requer conexão com a internet.
 
-## Observações importantes
-- **180 dias corridos** significa adicionar 180 dias ao dia de fabricação. O próprio dia de fabricação é o dia zero. Confirme que essa regra corresponde ao procedimento técnico e à rotulagem do produto.
-- **O fechamento da aba não apaga os dados**, mas limpeza do navegador, troca de dispositivo ou modo anônimo podem apagá-los. Não é uma base compartilhada entre funcionários. Para isso, será preciso backend como Supabase.
-- A aplicação não valida automaticamente se uma data de validade está de acordo com exigências sanitárias.
-- Não armazena dados de clientes ou informações pessoais no servidor.
-
-
-## Compartilhamento de PDF no WhatsApp
-
-Clique em **Enviar PDF pelo WhatsApp**. Em dispositivos/navegadores com compartilhamento nativo de arquivos, selecione o WhatsApp e o contato e confirme o envio. Quando esse compartilhamento não é suportado, o PDF é baixado e a conversa de WhatsApp é aberta: anexe o arquivo manualmente. Um site estático não consegue enviar documentos automaticamente para um contato específico sem uma API/servidor autorizado. O PDF é gerado com jsPDF via CDN (é preciso acesso à internet).
+## Observações
+- O prazo de 180 dias é a configuração atual do projeto. Confirme e ajuste esse prazo conforme os critérios técnicos e sanitários aplicáveis à operação.
+- Os registros ficam salvos apenas no navegador e dispositivo utilizados. Limpar os dados do navegador pode apagar os registros.
