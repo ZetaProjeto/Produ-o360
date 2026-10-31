@@ -67,16 +67,64 @@ $('entryForm').addEventListener('submit',e=>{
  items.push(entry);if(!save()){items.pop();return;}
  $('quantity').value=1;$('flavor').value='';render();syncForm();notify('Produção adicionada ao relatório.');
 });
-$('sendBtn').addEventListener('click',()=>{
+function makePdf() {
+ if (!window.jspdf?.jsPDF) { notify('Não foi possível carregar o gerador de PDF. Confira a internet.'); return null; }
+ const doc = new window.jspdf.jsPDF({ unit:'mm', format:'a4' });
+ const name = String(settings.business || '').trim();
+ const pageW = doc.internal.pageSize.getWidth();
+ let y=20;
+ const margin=18;
+ function ensure(space){if(y+space>275){doc.addPage();y=20;}}
+ doc.setFillColor(22,45,82);doc.rect(0,0,pageW,39,'F');
+ doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);doc.setFontSize(19);doc.text('RELATORIO DE PRODUCAO',margin,19);
+ doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(`Emissao: ${formatDate(getToday())}  |  Validade: 180 dias corridos`,margin,29);
+ y=49;doc.setTextColor(25,44,70);
+ if(name){doc.setFontSize(11);doc.setFont('helvetica','bold');const ls=doc.splitTextToSize(name,170);doc.text(ls,margin,y);y+=ls.length*6+5;}
+ items.forEach((item,i)=>{
+  const heading=titleFor(item);
+  const titleLines=doc.splitTextToSize(`${i+1}. ${heading}`,174);
+  ensure(titleLines.length*6+23);
+  doc.setFillColor(244,248,255);doc.roundedRect(margin-2,y-5,178,titleLines.length*6+20,2,2,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(23,44,73);doc.text(titleLines,margin,y);
+  y+=titleLines.length*6+1;
+  doc.setFont('helvetica','normal');doc.setFontSize(10);
+  doc.text(`Quantidade: ${item.qty.toLocaleString('pt-BR')} ${item.type==='caixa'?'caixa(s) de 10 L':'picole(s)'}`,margin,y+2);
+  doc.text(`Fabricacao: ${formatDate(item.date)}     Validade: ${formatDate(plusDays(item.date,DAYS))}`,margin,y+8);
+  y+=22;
+ });
+ ensure(30);
+ const boxes=items.filter(x=>x.type==='caixa').reduce((a,b)=>a+b.qty,0);
+ const pops=items.filter(x=>x.type==='picole').reduce((a,b)=>a+b.qty,0);
+ doc.setDrawColor(214,228,245);doc.line(margin,y,pageW-margin,y);y+=9;
+ doc.setFontSize(12);doc.setFont('helvetica','bold');doc.text(`TOTAL: ${boxes.toLocaleString('pt-BR')} caixa(s) de 10 L | ${pops.toLocaleString('pt-BR')} picole(s)`,margin,y);
+ const date=getToday().replaceAll('-','');
+ return {blob:doc.output('blob'),filename:`relatorio-producao-${date}.pdf`};
+}
+function downloadPdf(pdf){
+ const url=URL.createObjectURL(pdf.blob);
+ const a=document.createElement('a');a.href=url;a.download=pdf.filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+$('sendBtn').addEventListener('click',async()=>{
  if(!checkItems())return;
  const phone=String(settings.phone||'').replace(/\D/g,'');
  if(phone && (phone.length<10||phone.length>15)){notify('Confira o WhatsApp nas configurações.');return;}
- const url=`https://wa.me/${phone}?text=${encodeURIComponent(report())}`;
- if(url.length>7500){notify('Relatório muito longo para link do WhatsApp. Use Copiar relatório.');return;}
- const opened=window.open(url,'_blank','noopener,noreferrer'); if(!opened) window.location.href=url;
+ const pdf=makePdf();if(!pdf)return;
+ const file=new File([pdf.blob],pdf.filename,{type:'application/pdf'});
+ try {
+  if(navigator.share && navigator.canShare?.({files:[file]})) {
+   await navigator.share({files:[file],title:'Relatório de produção'});
+   return;
+  }
+ } catch(err){
+  if(err?.name==='AbortError')return;
+ }
+ downloadPdf(pdf);
+ notify('PDF baixado! Anexe o arquivo na conversa do WhatsApp.');
+ const url=`https://wa.me/${phone}?text=${encodeURIComponent('Olá! Segue o relatório de produção em PDF. Vou anexar o documento nesta conversa.')}`;
+ const opened=window.open(url,'_blank','noopener,noreferrer');if(!opened) notify('PDF baixado. Abra o WhatsApp e anexe o arquivo manualmente.');
 });
 $('copyBtn').addEventListener('click',async()=>{if(!checkItems())return;try{await navigator.clipboard.writeText(report());notify('Relatório copiado!');}catch{notify('Não foi possível copiar automaticamente.');}});
-$('printBtn').addEventListener('click',()=>{if(checkItems())window.print();});
+$('printBtn').addEventListener('click',()=>{if(!checkItems())return;const pdf=makePdf();if(pdf){downloadPdf(pdf);notify('PDF gerado com sucesso.');}});
 $('clearBtn').addEventListener('click',()=>{if(!items.length)return;if(confirm('Deseja remover todos os registros deste relatório?')){items=[];save();render();notify('Relatório limpo.');}});
 $('settingsBtn').addEventListener('click',()=>{ $('businessName').value=settings.business||'';$('whatsapp').value=settings.phone||'';$('settingsDialog').showModal();});
 $('saveSettings').addEventListener('click',e=>{const phone=$('whatsapp').value.replace(/\D/g,'');if(phone&&(phone.length<10||phone.length>15)){e.preventDefault();notify('Informe o número com DDI e DDD, ex.: 5531999999999.');return;}settings={business:$('businessName').value.trim(),phone};try{localStorage.setItem(SETTINGS,JSON.stringify(settings));notify('Configurações salvas.');}catch{notify('Não foi possível salvar as configurações.');}});

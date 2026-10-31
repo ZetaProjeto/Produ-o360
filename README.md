@@ -25,3 +25,8 @@ O botão **Enviar pelo WhatsApp** abre um link `wa.me` com o texto preenchido, m
 - **O fechamento da aba não apaga os dados**, mas limpeza do navegador, troca de dispositivo ou modo anônimo podem apagá-los. Não é uma base compartilhada entre funcionários. Para isso, será preciso backend como Supabase.
 - A aplicação não valida automaticamente se uma data de validade está de acordo com exigências sanitárias.
 - Não armazena dados de clientes ou informações pessoais no servidor.
+
+
+## Compartilhamento de PDF no WhatsApp
+
+Clique em **Enviar PDF pelo WhatsApp**. Em dispositivos/navegadores com compartilhamento nativo de arquivos, selecione o WhatsApp e o contato e confirme o envio. Quando esse compartilhamento não é suportado, o PDF é baixado e a conversa de WhatsApp é aberta: anexe o arquivo manualmente. Um site estático não consegue enviar documentos automaticamente para um contato específico sem uma API/servidor autorizado. O PDF é gerado com jsPDF via CDN (é preciso acesso à internet).

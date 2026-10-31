@@ -7,6 +7,7 @@
   <meta name="description" content="Registro de produção de açaí, sorvetes e picolés com cálculo de validade e relatório para WhatsApp." />
   <title>Produção & Validade | Relatórios</title>
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -38,8 +39,8 @@
         <div class="panel-heading"><div><span class="kicker">02 / RELATÓRIO</span><h2 id="reportTitle">Produção registrada</h2></div><span class="small-tag" id="countBadge">0 registros</span></div>
         <div class="totals"><div><small>Caixas de 10 L</small><strong id="boxesTotal">0</strong></div><div><small>Picolés</small><strong id="popsTotal">0</strong></div></div>
         <div class="list" id="itemsList"><div class="empty">Nenhum registro adicionado. Preencha o formulário para começar.</div></div>
-        <div class="report-actions"><button type="button" id="sendBtn" class="btn whatsapp">↗ Enviar pelo WhatsApp</button><button type="button" id="copyBtn" class="btn secondary">Copiar relatório</button><button type="button" id="printBtn" class="btn secondary">Imprimir / salvar PDF</button><button type="button" id="clearBtn" class="btn danger">Limpar relatório</button></div>
-        <p class="hint">O envio pelo WhatsApp abre uma conversa com a mensagem pronta. Confirme o envio no aplicativo.</p>
+        <div class="report-actions"><button type="button" id="sendBtn" class="btn whatsapp">↗ Enviar PDF pelo WhatsApp</button><button type="button" id="copyBtn" class="btn secondary">Copiar relatório</button><button type="button" id="printBtn" class="btn secondary">Baixar PDF</button><button type="button" id="clearBtn" class="btn danger">Limpar relatório</button></div>
+        <p class="hint">No celular compatível, compartilhe o PDF diretamente pelo WhatsApp. Nos demais dispositivos, o PDF será baixado para anexar manualmente na conversa.</p>
       </section>
     </div>
     <footer>PRODUÇÃO360 · Registros salvos somente neste navegador · Confirme a validade com os procedimentos da sua empresa.</footer>
