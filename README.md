@@ -8,7 +8,7 @@ Projeto estático pronto para GitHub Pages (HTML, CSS e JavaScript).
 - Data de fabricação em cada registro; validade calculada adicionando 180 dias corridos.
 - Lista de produção, totais de caixas e picolés, remoção de registros.
 - **Baixar PDF:** gera e baixa relatório A4.
-- **Imprimir relatório:** abre o PDF com comando de impressão (dependendo do navegador, pode ser necessário clicar no ícone Imprimir no visualizador de PDF). Permita pop-ups para o site; se bloqueado, o PDF será baixado para impressão manual.
+- **Imprimir relatório:** abre uma visualização dedicada à impressão, com botão Imprimir / Salvar em PDF. Permita pop-ups para o site.
 - **Copiar relatório:** copia os dados como texto.
 - Configurações: apenas nome do estabelecimento.
 - Dados salvos localmente no navegador (`localStorage`); não existe sincronização entre dispositivos.
@@ -19,7 +19,7 @@ Projeto estático pronto para GitHub Pages (HTML, CSS e JavaScript).
 3. Após publicar, atualize o navegador com Ctrl+F5 se ainda aparecer a interface antiga.
 
 ## Dependência
-O gerador PDF usa a biblioteca jsPDF via CDN, portanto necessita conexão à internet para carregamento inicial.
+O PDF é gerado diretamente no navegador, sem bibliotecas externas e sem exigir conexão com CDN.
 
 ## Atenção
 O cálculo usa **data de fabricação + 180 dias** (fabricação como dia zero). Confirme o prazo de validade conforme os critérios técnicos/sanitários de cada produto.

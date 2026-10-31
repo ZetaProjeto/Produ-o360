@@ -68,60 +68,87 @@ $('entryForm').addEventListener('submit',e=>{
  items.push(entry);if(!save()){items.pop();return;}
  $('quantity').value=1;$('flavor').value='';render();syncForm();notify('Produção adicionada ao relatório.');
 });
-function makePdf() {
- if (!window.jspdf?.jsPDF) { notify('Não foi possível carregar o gerador de PDF. Confira a internet.'); return null; }
- const doc = new window.jspdf.jsPDF({ unit:'mm', format:'a4' });
- const name = String(settings.business || '').trim();
- const pageW = doc.internal.pageSize.getWidth();
- let y=20;
- const margin=18;
- function ensure(space){if(y+space>275){doc.addPage();y=20;}}
- doc.setFillColor(22,45,82);doc.rect(0,0,pageW,39,'F');
- doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);doc.setFontSize(19);doc.text('RELATORIO DE PRODUCAO',margin,19);
- doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(`Emissao: ${formatDate(getToday())}  |  Validade: 180 dias corridos`,margin,29);
- y=49;doc.setTextColor(25,44,70);
- if(name){doc.setFontSize(11);doc.setFont('helvetica','bold');const ls=doc.splitTextToSize(name,170);doc.text(ls,margin,y);y+=ls.length*6+5;}
- items.forEach((item,i)=>{
-  const heading=titleFor(item);
-  const titleLines=doc.splitTextToSize(`${i+1}. ${heading}`,174);
-  ensure(titleLines.length*6+23);
-  doc.setFillColor(244,248,255);doc.roundedRect(margin-2,y-5,178,titleLines.length*6+20,2,2,'F');
-  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(23,44,73);doc.text(titleLines,margin,y);
-  y+=titleLines.length*6+1;
-  doc.setFont('helvetica','normal');doc.setFontSize(10);
-  doc.text(`Quantidade: ${item.qty.toLocaleString('pt-BR')} ${item.type==='caixa'?'caixa(s) de 10 L':'picole(s)'}`,margin,y+2);
-  doc.text(`Fabricacao: ${formatDate(item.date)}     Validade: ${formatDate(plusDays(item.date,DAYS))}`,margin,y+8);
-  y+=22;
- });
- ensure(30);
- const boxes=items.filter(x=>x.type==='caixa').reduce((a,b)=>a+b.qty,0);
- const pops=items.filter(x=>x.type==='picole').reduce((a,b)=>a+b.qty,0);
- doc.setDrawColor(214,228,245);doc.line(margin,y,pageW-margin,y);y+=9;
- doc.setFontSize(12);doc.setFont('helvetica','bold');doc.text(`TOTAL: ${boxes.toLocaleString('pt-BR')} caixa(s) de 10 L | ${pops.toLocaleString('pt-BR')} picole(s)`,margin,y);
- const date=getToday().replaceAll('-','');
- return {doc,blob:doc.output('blob'),filename:`relatorio-producao-${date}.pdf`};
+// Gerador PDF local, sem dependências externas ou conexão com CDN.
+function pdfHex(value) {
+ const map = {0x20AC:128,0x201A:130,0x0192:131,0x201E:132,0x2026:133,0x2020:134,0x2021:135,0x02C6:136,0x2030:137,0x0160:138,0x2039:139,0x0152:140,0x017D:142,0x2018:145,0x2019:146,0x201C:147,0x201D:148,0x2022:149,0x2013:150,0x2014:151,0x02DC:152,0x2122:153,0x0161:154,0x203A:155,0x0153:156,0x017E:158,0x0178:159};
+ return '<'+Array.from(String(value),ch=>{const cp=ch.codePointAt(0);const b=(cp<=255&&!(cp>=128&&cp<=159))?cp:(map[cp]??63);return b.toString(16).padStart(2,'0');}).join('')+'>';
 }
-function downloadPdf(pdf){
- const url=URL.createObjectURL(pdf.blob);
- const a=document.createElement('a');a.href=url;a.download=pdf.filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+function wrapPdf(text,max=82) {
+ const lines=[];let line='';
+ for(const word of String(text).split(/\s+/)) {
+  if(!word)continue;
+  if(word.length>max){if(line){lines.push(line);line='';}for(let i=0;i<word.length;i+=max)lines.push(word.slice(i,i+max));continue;}
+  if((line+' '+word).trim().length>max){lines.push(line);line=word;}else line=(line+' '+word).trim();
+ }
+ if(line)lines.push(line);return lines.length?lines:[''];
+}
+function createPdfBlob() {
+ const pages=[];let commands=[],y=0;const pageHeight=842;
+ function line(text,size=11,bold=false,indent=44) {
+  const limit= size>=15?53: size>=11?83:99;
+  for(const piece of wrapPdf(text,limit)) {
+   if(y>pageHeight-65)nextPage();
+   commands.push(`BT /${bold?'F2':'F1'} ${size} Tf 0.10 0.17 0.28 rg 1 0 0 1 ${indent} ${pageHeight-y} Tm ${pdfHex(piece)} Tj ET`);
+   y+=size+7;
+  }
+ }
+ function nextPage() {if(commands.length)pages.push(commands.join('\n'));commands=[];y=46;}
+ nextPage();
+ line('RELATÓRIO DE PRODUÇÃO',19,true);y+=7;
+ const business=String(settings.business||'').trim();
+ if(business)line('Estabelecimento: '+business,11,true);
+ line('Emissão: '+formatDate(getToday())+'  |  Validade: 180 dias corridos',10);
+ y+=12;
+ items.forEach((item,i)=>{
+  if(y>pageHeight-135)nextPage();
+  line((i+1)+'. '+titleFor(item),12,true); 
+  line('Quantidade: '+item.qty.toLocaleString('pt-BR')+(item.type==='caixa'?' caixa(s) de 10 L':' picolé(s)'),10);
+  line('Fabricação: '+formatDate(item.date)+'     Validade: '+formatDate(plusDays(item.date,DAYS)),10);
+  y+=12;
+ });
+ if(y>pageHeight-105)nextPage();
+ const boxes=items.filter(i=>i.type==='caixa').reduce((n,i)=>n+i.qty,0);
+ const pops=items.filter(i=>i.type==='picole').reduce((n,i)=>n+i.qty,0);
+ line('TOTAL: '+boxes.toLocaleString('pt-BR')+' caixa(s) de 10 L | '+pops.toLocaleString('pt-BR')+' picolé(s)',11,true);
+ pages.push(commands.join('\n'));
+ const objs=['', '<< /Type /Catalog /Pages 2 0 R >>', '', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>','<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'];
+ const kids=[];
+ for(const content of pages){
+  const pageId=objs.length;const streamId=pageId+1;kids.push(`${pageId} 0 R`);
+  objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${streamId} 0 R >>`);
+  objs.push(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+ }
+ objs[2]=`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${kids.length} >>`;
+ let pdf='%PDF-1.4\n';const offsets=[0];
+ for(let i=1;i<objs.length;i++){offsets[i]=pdf.length;pdf+=`${i} 0 obj\n${objs[i]}\nendobj\n`;}
+ const xref=pdf.length;
+ pdf+=`xref\n0 ${objs.length}\n0000000000 65535 f \n`;
+ for(let i=1;i<objs.length;i++)pdf+=`${String(offsets[i]).padStart(10,'0')} 00000 n \n`;
+ pdf+=`trailer\n<< /Size ${objs.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+ return new Blob([pdf],{type:'application/pdf'});
+}
+function downloadPdf(){
+ const blob=createPdfBlob();const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');a.href=url;a.download=`relatorio-producao-${getToday().replaceAll('-','')}.pdf`;
+ document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
 $('downloadBtn').addEventListener('click',()=>{
  if(!checkItems())return;
- const pdf=makePdf();if(!pdf)return;
- downloadPdf(pdf);notify('PDF gerado para download.');
+ try{downloadPdf();notify('PDF gerado para download.');}catch(error){console.error(error);notify('Falha ao gerar PDF. Atualize a página e tente novamente.');}
 });
-$('copyBtn').addEventListener('click',async()=>{if(!checkItems())return;try{await navigator.clipboard.writeText(report());notify('Relatório copiado!');}catch{notify('Não foi possível copiar automaticamente.');}});
+function escapeHtml(value){return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
 $('printBtn').addEventListener('click',()=>{
  if(!checkItems())return;
- // Abrir a aba diretamente no clique evita bloqueio de pop-ups.
- const tab=window.open('','_blank');
- const pdf=makePdf();if(!pdf){if(tab)tab.close();return;}
- pdf.doc.autoPrint();
- const url=URL.createObjectURL(pdf.doc.output('blob'));
- if(tab){tab.location.href=url;notify('Relatório aberto para impressão.');}
- else{downloadPdf(pdf);notify('Pop-up bloqueado. PDF baixado; abra o arquivo e imprima.');}
- setTimeout(()=>URL.revokeObjectURL(url),120000);
+ const win=window.open('','_blank');
+ if(!win){notify('O navegador bloqueou a impressão. Permita janelas pop-up para este site.');return;}
+ const boxes=items.filter(i=>i.type==='caixa').reduce((n,i)=>n+i.qty,0);
+ const pops=items.filter(i=>i.type==='picole').reduce((n,i)=>n+i.qty,0);
+ const rows=items.map((item,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(titleFor(item))}</td><td>${item.qty.toLocaleString('pt-BR')}</td><td>${formatDate(item.date)}</td><td>${formatDate(plusDays(item.date,DAYS))}</td></tr>`).join('');
+ const business=escapeHtml(String(settings.business||'').trim());
+ win.document.open();win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório de Produção - Impressão</title><style>body{font:13px Arial,sans-serif;color:#172c49;margin:35px}h1{font-size:23px;margin-bottom:10px}p{color:#556c86}table{width:100%;border-collapse:collapse;margin-top:25px}th,td{padding:9px 7px;text-align:left;border-bottom:1px solid #cedcec;overflow-wrap:anywhere}th{background:#eef4ff}tfoot td{font-weight:bold}.actions{margin-bottom:22px}button{padding:12px 20px;background:#1769e8;color:white;border:0;border-radius:7px;cursor:pointer}@page{size:A4;margin:14mm}@media print{body{margin:0}.actions{display:none}thead{display:table-header-group}tr{break-inside:avoid}}</style></head><body><div class="actions"><button onclick="window.print()">Imprimir / Salvar em PDF</button></div><h1>RELATÓRIO DE PRODUÇÃO</h1>${business?`<p><b>Estabelecimento:</b> ${business}</p>`:''}<p>Emissão: ${formatDate(getToday())} | Validade: 180 dias corridos após a fabricação</p><table><thead><tr><th>#</th><th>Produto / Sabor</th><th>Quantidade</th><th>Fabricação</th><th>Validade</th></tr></thead><tbody>${rows}</tbody></table><p><b>TOTAL:</b> ${boxes.toLocaleString('pt-BR')} caixa(s) de 10 L | ${pops.toLocaleString('pt-BR')} picolé(s)</p></body></html>`);win.document.close();
+ win.focus();notify('Visualização de impressão aberta. Clique em Imprimir / Salvar em PDF.');
 });
+$('copyBtn').addEventListener('click',async()=>{if(!checkItems())return;try{await navigator.clipboard.writeText(report());notify('Relatório copiado!');}catch{notify('Não foi possível copiar automaticamente.');}});
 $('clearBtn').addEventListener('click',()=>{if(!items.length)return;if(confirm('Deseja remover todos os registros deste relatório?')){items=[];save();render();notify('Relatório limpo.');}});
 $('settingsBtn').addEventListener('click',()=>{ $('businessName').value=settings.business||'';$('settingsDialog').showModal();});
 $('saveSettings').addEventListener('click',()=>{settings={business:$('businessName').value.trim()};try{localStorage.setItem(SETTINGS,JSON.stringify(settings));notify('Configurações salvas.');}catch{notify('Não foi possível salvar as configurações.');}});
